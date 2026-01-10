@@ -4,6 +4,7 @@ import { AppState, DowntimeEvent } from '@/types/machine';
 import { useMetrics } from '@/hooks/useMetrics';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface DowntimeScreenProps {
   state: AppState;
@@ -20,6 +21,7 @@ export const DowntimeScreen: React.FC<DowntimeScreenProps> = ({
 }) => {
   const [reason, setReason] = useState('');
   const { todayDowntimeEvents, todayDowntimeFormatted, formatDuration } = useMetrics(state);
+  const { t, intlLocale } = useI18n();
 
   const handleStartStop = () => {
     onStartDowntime(reason);
@@ -27,7 +29,7 @@ export const DowntimeScreen: React.FC<DowntimeScreenProps> = ({
   };
 
   const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString('en-US', {
+    return new Date(timestamp).toLocaleTimeString(intlLocale, {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -38,8 +40,8 @@ export const DowntimeScreen: React.FC<DowntimeScreenProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Downtime</h1>
-          <p className="text-sm text-muted-foreground">Manage stops</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('downtime.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('downtime.subtitle')}</p>
         </div>
         <StatusBadge status={state.machine.status} />
       </div>
@@ -48,34 +50,34 @@ export const DowntimeScreen: React.FC<DowntimeScreenProps> = ({
       <div className={`metric-card ${activeDowntime ? 'border-danger/50' : 'border-success/50'}`}>
         <div className="flex items-center gap-2 mb-4">
           <Clock className="w-4 h-4 text-muted-foreground" />
-          <span className="metric-label">Machine Status</span>
+          <span className="metric-label">{t('downtime.machineStatus')}</span>
         </div>
 
         {activeDowntime ? (
           <div className="space-y-4">
             <div className="text-center py-4">
-              <p className="text-danger font-semibold mb-2">Machine is STOPPED</p>
+              <p className="text-danger font-semibold mb-2">{t('downtime.machineStopped')}</p>
               <p className="text-sm text-muted-foreground">
-                Since {formatTime(activeDowntime.startTime)}
+                {t('downtime.since', { time: formatTime(activeDowntime.startTime) })}
                 {activeDowntime.reason && ` • ${activeDowntime.reason}`}
               </p>
             </div>
             <button onClick={onEndDowntime} className="action-btn-success flex items-center justify-center gap-2">
               <Play className="w-5 h-5" />
-              End Stop
+              {t('downtime.endStop')}
             </button>
           </div>
         ) : (
           <div className="space-y-4">
             <Input
-              placeholder="Reason (optional)"
+              placeholder={t('downtime.reasonPlaceholder')}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="bg-secondary border-border"
             />
             <button onClick={handleStartStop} className="action-btn-danger flex items-center justify-center gap-2">
               <Square className="w-5 h-5" />
-              Start Stop
+              {t('downtime.startStop')}
             </button>
           </div>
         )}
@@ -84,7 +86,7 @@ export const DowntimeScreen: React.FC<DowntimeScreenProps> = ({
       {/* Today's summary */}
       <div className="metric-card">
         <div className="flex items-center justify-between">
-          <span className="metric-label">Total Downtime Today</span>
+          <span className="metric-label">{t('downtime.totalToday')}</span>
           <span className="text-2xl font-bold text-danger">{todayDowntimeFormatted}</span>
         </div>
       </div>
@@ -93,17 +95,17 @@ export const DowntimeScreen: React.FC<DowntimeScreenProps> = ({
       <div className="metric-card">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4 text-muted-foreground" />
-          <span className="metric-label">Today's Events</span>
+          <span className="metric-label">{t('downtime.todaysEvents')}</span>
         </div>
 
         <div className="space-y-3">
           {todayDowntimeEvents.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No stops today</p>
+            <p className="text-sm text-muted-foreground text-center py-4">{t('downtime.noStopsToday')}</p>
           ) : (
             todayDowntimeEvents.map((event) => {
               const duration = event.endTime 
                 ? formatDuration(event.endTime - event.startTime)
-                : 'Ongoing';
+                : t('downtime.ongoing');
               
               return (
                 <div

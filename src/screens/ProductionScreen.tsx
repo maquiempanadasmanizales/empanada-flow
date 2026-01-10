@@ -2,6 +2,7 @@ import React from 'react';
 import { TrendingUp, Plus } from 'lucide-react';
 import { AppState } from '@/types/machine';
 import { useMetrics } from '@/hooks/useMetrics';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface ProductionScreenProps {
   state: AppState;
@@ -10,6 +11,7 @@ interface ProductionScreenProps {
 
 export const ProductionScreen: React.FC<ProductionScreenProps> = ({ state, onAddProduction }) => {
   const { todayProduction, productionByHour, last7DaysProduction } = useMetrics(state);
+  const { t, intlLocale } = useI18n();
 
   const maxHourly = Math.max(...productionByHour.map(h => h.count), 1);
 
@@ -18,12 +20,12 @@ export const ProductionScreen: React.FC<ProductionScreenProps> = ({ state, onAdd
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Production</h1>
-          <p className="text-sm text-muted-foreground">Track your output</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('production.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('production.subtitle')}</p>
         </div>
         <div className="text-right">
-          <p className="text-3xl font-bold text-primary">{todayProduction.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground">TODAY</p>
+          <p className="text-3xl font-bold text-primary">{todayProduction.toLocaleString(intlLocale)}</p>
+          <p className="text-xs text-muted-foreground">{t('production.todayLabel')}</p>
         </div>
       </div>
 
@@ -31,7 +33,7 @@ export const ProductionScreen: React.FC<ProductionScreenProps> = ({ state, onAdd
       <div className="metric-card">
         <div className="flex items-center gap-2 mb-4">
           <Plus className="w-4 h-4 text-muted-foreground" />
-          <span className="metric-label">Manual Entry</span>
+          <span className="metric-label">{t('production.manualEntry')}</span>
         </div>
         <div className="flex gap-3">
           <button
@@ -59,7 +61,7 @@ export const ProductionScreen: React.FC<ProductionScreenProps> = ({ state, onAdd
       <div className="metric-card">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-4 h-4 text-muted-foreground" />
-          <span className="metric-label">Today by Hour</span>
+          <span className="metric-label">{t('production.todayByHour')}</span>
         </div>
         <div className="space-y-2">
           {productionByHour.map(({ hour, count }) => (
@@ -79,7 +81,7 @@ export const ProductionScreen: React.FC<ProductionScreenProps> = ({ state, onAdd
             </div>
           ))}
           {productionByHour.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">No data yet today</p>
+            <p className="text-sm text-muted-foreground text-center py-4">{t('production.noDataToday')}</p>
           )}
         </div>
       </div>
@@ -87,13 +89,13 @@ export const ProductionScreen: React.FC<ProductionScreenProps> = ({ state, onAdd
       {/* Last 7 days */}
       <div className="metric-card">
         <div className="flex items-center gap-2 mb-4">
-          <span className="metric-label">Last 7 Days</span>
+          <span className="metric-label">{t('production.last7Days')}</span>
         </div>
         <div className="space-y-3">
           {last7DaysProduction.map(({ date, count }, index) => (
             <div key={index} className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">{date}</span>
-              <span className="text-lg font-semibold text-foreground">{count.toLocaleString()}</span>
+              <span className="text-lg font-semibold text-foreground">{count.toLocaleString(intlLocale)}</span>
             </div>
           ))}
         </div>
