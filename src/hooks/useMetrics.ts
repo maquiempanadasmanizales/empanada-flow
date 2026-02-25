@@ -14,6 +14,7 @@ const isToday = (timestamp: number): boolean => {
 
 export const useMetrics = (state: AppState) => {
   const { t, intlLocale } = useI18n();
+  const currencyCode = 'USD';
 
   const formatDuration = useCallback(
     (ms: number): string => {
@@ -29,11 +30,27 @@ export const useMetrics = (state: AppState) => {
     [t],
   );
 
+  const formatCurrency = useCallback(
+    (value: number): string => {
+      return new Intl.NumberFormat(intlLocale, {
+        style: 'currency',
+        currency: currencyCode,
+        maximumFractionDigits: 2,
+      }).format(value);
+    },
+    [intlLocale],
+  );
+
   const todayProduction = useMemo(() => {
     return state.productionEvents
       .filter(e => isToday(e.timestamp))
       .reduce((sum, e) => sum + e.count, 0);
   }, [state.productionEvents]);
+
+  const todayEarnings = useMemo(
+    () => todayProduction * state.profitPerEmpanada,
+    [todayProduction, state.profitPerEmpanada],
+  );
 
   const todayDowntime = useMemo(() => {
     const now = Date.now();
@@ -141,6 +158,7 @@ export const useMetrics = (state: AppState) => {
 
   return {
     todayProduction,
+    todayEarnings,
     todayDowntime,
     todayDowntimeFormatted,
     todayOperatingTime,
@@ -150,5 +168,6 @@ export const useMetrics = (state: AppState) => {
     todayDowntimeEvents,
     productionByOperator,
     formatDuration,
+    formatCurrency,
   };
 };

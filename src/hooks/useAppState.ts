@@ -3,6 +3,27 @@ import { AppState, ProductionEvent, DowntimeEvent, OperatorSession } from '@/typ
 
 const STORAGE_KEY = 'empanada-machine-demo';
 
+const createDemoProductionEvents = (): ProductionEvent[] => {
+  const now = new Date();
+  const events: ProductionEvent[] = [];
+  const hoursBack = 8;
+  for (let offset = hoursBack; offset >= 0; offset--) {
+    const hourStart = new Date(now);
+    hourStart.setHours(now.getHours() - offset, 0, 0, 0);
+    const eventCount = Math.floor(Math.random() * 3) + 1;
+    for (let i = 0; i < eventCount; i++) {
+      const timestamp = hourStart.getTime() + Math.floor(Math.random() * 60 * 60 * 1000);
+      const count = Math.floor(Math.random() * 5) + 2;
+      events.push({
+        id: `demo-${timestamp}-${i}`,
+        timestamp,
+        count,
+      });
+    }
+  }
+  return events;
+};
+
 const getInitialState = (): AppState => ({
   machine: {
     id: 'machine-001',
@@ -19,19 +40,36 @@ const getInitialState = (): AppState => ({
   ],
   operatorSessions: [],
   demoMode: true,
+  profitPerEmpanada: 1,
   lastUpdated: Date.now(),
 });
 
 const loadState = (): AppState => {
+  const initialState = getInitialState();
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored) as Partial<AppState>;
+      const nextState: AppState = {
+        ...initialState,
+        ...parsed,
+        machine: {
+          ...initialState.machine,
+          ...parsed.machine,
+        },
+      };
+      if (nextState.demoMode && nextState.productionEvents.length === 0) {
+        nextState.productionEvents = createDemoProductionEvents();
+      }
+      return nextState;
     }
   } catch (e) {
     console.error('Failed to load state:', e);
   }
-  return getInitialState();
+  return {
+    ...initialState,
+    productionEvents: initialState.demoMode ? createDemoProductionEvents() : [],
+  };
 };
 
 const saveState = (state: AppState) => {

@@ -141,11 +141,12 @@
   }
 
   .metric-value {
-    @apply text-4xl font-bold tracking-tight text-foreground;
+    @apply font-bold tracking-tight text-foreground whitespace-nowrap;
+    font-size: clamp(1.5rem, 5vw, 2.25rem);
   }
 
   .metric-label {
-    @apply text-sm font-medium text-muted-foreground uppercase tracking-wide;
+    @apply text-sm font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap;
   }
 
   .status-badge {
