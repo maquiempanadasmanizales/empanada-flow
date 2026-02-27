@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface OperatorScreenProps {
   state: AppState;
@@ -24,7 +25,8 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({
   onEndSession,
 }) => {
   const [selectedOperator, setSelectedOperator] = useState<string>('');
-  const { productionByOperator } = useMetrics(state);
+  const { productionByOperator, formatDuration } = useMetrics(state);
+  const { t, intlLocale } = useI18n();
 
   const activeOperator = activeSession
     ? state.operators.find(op => op.id === activeSession.operatorId)
@@ -38,7 +40,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({
   };
 
   const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString('en-US', {
+    return new Date(timestamp).toLocaleTimeString(intlLocale, {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -49,8 +51,8 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Operator</h1>
-          <p className="text-sm text-muted-foreground">Manage sessions</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('operator.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('operator.subtitle')}</p>
         </div>
         {activeOperator && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/20">
@@ -64,7 +66,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({
       <div className="metric-card">
         <div className="flex items-center gap-2 mb-4">
           <User className="w-4 h-4 text-muted-foreground" />
-          <span className="metric-label">Current Session</span>
+          <span className="metric-label">{t('operator.currentSession')}</span>
         </div>
 
         {activeSession ? (
@@ -72,19 +74,19 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({
             <div className="text-center py-4">
               <p className="text-lg font-semibold text-foreground mb-2">{activeOperator?.name}</p>
               <p className="text-sm text-muted-foreground">
-                Started at {formatTime(activeSession.startTime)}
+                {t('operator.startedAt', { time: formatTime(activeSession.startTime) })}
               </p>
             </div>
             <button onClick={onEndSession} className="action-btn-danger flex items-center justify-center gap-2">
               <Square className="w-5 h-5" />
-              End Session
+              {t('operator.endSession')}
             </button>
           </div>
         ) : (
           <div className="space-y-4">
             <Select value={selectedOperator} onValueChange={setSelectedOperator}>
               <SelectTrigger className="bg-secondary border-border">
-                <SelectValue placeholder="Select operator" />
+                <SelectValue placeholder={t('operator.selectOperator')} />
               </SelectTrigger>
               <SelectContent>
                 {state.operators.map((op) => (
@@ -100,7 +102,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({
               className="action-btn-success flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Play className="w-5 h-5" />
-              Start Session
+              {t('operator.startSession')}
             </button>
           </div>
         )}
@@ -109,7 +111,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({
       {/* Operator stats */}
       <div className="metric-card">
         <div className="flex items-center gap-2 mb-4">
-          <span className="metric-label">Today's Performance</span>
+          <span className="metric-label">{t('operator.todayPerformance')}</span>
         </div>
 
         <div className="space-y-4">
@@ -126,7 +128,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({
                 <span className="font-medium text-foreground">{operator.name}</span>
                 {activeSession?.operatorId === operator.id && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-success/20 text-success">
-                    Active
+                    {t('operator.active')}
                   </span>
                 )}
               </div>
@@ -134,15 +136,15 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({
                 <div className="flex items-center gap-2">
                   <Package className="w-4 h-4 text-primary" />
                   <div>
-                    <p className="text-lg font-bold text-foreground">{production}</p>
-                    <p className="text-xs text-muted-foreground">Empanadas</p>
+                    <p className="text-lg font-bold text-foreground">{production.toLocaleString(intlLocale)}</p>
+                    <p className="text-xs text-muted-foreground">{t('operator.empanadas')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-muted-foreground" />
                   <div>
-                    <p className="text-lg font-bold text-foreground">{timeMs > 0 ? time : '0m'}</p>
-                    <p className="text-xs text-muted-foreground">Time</p>
+                    <p className="text-lg font-bold text-foreground">{timeMs > 0 ? time : formatDuration(0)}</p>
+                    <p className="text-xs text-muted-foreground">{t('operator.time')}</p>
                   </div>
                 </div>
               </div>

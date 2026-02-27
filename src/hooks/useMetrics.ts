@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
-import { AppState, ProductionEvent, DowntimeEvent, OperatorSession } from '@/types/machine';
+import { useCallback, useMemo } from 'react';
+import { AppState } from '@/types/machine';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const startOfDay = (date: Date = new Date()): number => {
   const d = new Date(date);
@@ -11,21 +12,45 @@ const isToday = (timestamp: number): boolean => {
   return timestamp >= startOfDay();
 };
 
-const formatDuration = (ms: number): string => {
-  const hours = Math.floor(ms / (1000 * 60 * 60));
-  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}m`;
-};
-
 export const useMetrics = (state: AppState) => {
+  const { t, intlLocale } = useI18n();
+  const currencyCode = 'USD';
+
+  const formatDuration = useCallback(
+    (ms: number): string => {
+      const hours = Math.floor(ms / (1000 * 60 * 60));
+      const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+      const hourLabel = t('duration.hoursShort');
+      const minuteLabel = t('duration.minutesShort');
+      if (hours > 0) {
+        return `${hours}${hourLabel} ${minutes}${minuteLabel}`;
+      }
+      return `${minutes}${minuteLabel}`;
+    },
+    [t],
+  );
+
+  const formatCurrency = useCallback(
+    (value: number): string => {
+      return new Intl.NumberFormat(intlLocale, {
+        style: 'currency',
+        currency: currencyCode,
+        maximumFractionDigits: 2,
+      }).format(value);
+    },
+    [intlLocale],
+  );
+
   const todayProduction = useMemo(() => {
     return state.productionEvents
       .filter(e => isToday(e.timestamp))
       .reduce((sum, e) => sum + e.count, 0);
   }, [state.productionEvents]);
+
+  const todayEarnings = useMemo(
+    () => todayProduction * state.profitPerEmpanada,
+    [todayProduction, state.profitPerEmpanada],
+  );
 
   const todayDowntime = useMemo(() => {
     const now = Date.now();
@@ -37,7 +62,10 @@ export const useMetrics = (state: AppState) => {
       }, 0);
   }, [state.downtimeEvents]);
 
-  const todayDowntimeFormatted = useMemo(() => formatDuration(todayDowntime), [todayDowntime]);
+  const todayDowntimeFormatted = useMemo(
+    () => formatDuration(todayDowntime),
+    [todayDowntime, formatDuration],
+  );
 
   const todayOperatingTime = useMemo(() => {
     const dayStart = startOfDay();
@@ -46,7 +74,10 @@ export const useMetrics = (state: AppState) => {
     return totalTime - todayDowntime;
   }, [todayDowntime]);
 
-  const todayOperatingTimeFormatted = useMemo(() => formatDuration(todayOperatingTime), [todayOperatingTime]);
+  const todayOperatingTimeFormatted = useMemo(
+    () => formatDuration(todayOperatingTime),
+    [todayOperatingTime, formatDuration],
+  );
 
   const productionByHour = useMemo(() => {
     const hourlyMap: Record<number, number> = {};
@@ -77,12 +108,12 @@ export const useMetrics = (state: AppState) => {
         .reduce((sum, e) => sum + e.count, 0);
       
       days.push({
-        date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        date: date.toLocaleDateString(intlLocale, { weekday: 'short', month: 'short', day: 'numeric' }),
         count,
       });
     }
     return days;
-  }, [state.productionEvents]);
+  }, [state.productionEvents, intlLocale]);
 
   const todayDowntimeEvents = useMemo(() => {
     return state.downtimeEvents
@@ -123,10 +154,11 @@ export const useMetrics = (state: AppState) => {
       time: formatDuration(operatorProduction[op.id].time),
       timeMs: operatorProduction[op.id].time,
     }));
-  }, [state.operators, state.operatorSessions, state.productionEvents]);
+  }, [state.operators, state.operatorSessions, state.productionEvents, formatDuration]);
 
   return {
     todayProduction,
+    todayEarnings,
     todayDowntime,
     todayDowntimeFormatted,
     todayOperatingTime,
@@ -136,5 +168,6 @@ export const useMetrics = (state: AppState) => {
     todayDowntimeEvents,
     productionByOperator,
     formatDuration,
+    formatCurrency,
   };
 };

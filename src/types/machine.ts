@@ -37,5 +37,6 @@ export interface AppState {
   operators: Operator[];
   operatorSessions: OperatorSession[];
   demoMode: boolean;
+  profitPerEmpanada: number;
   lastUpdated: number;
 }

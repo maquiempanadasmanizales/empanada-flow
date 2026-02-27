@@ -17,24 +17,30 @@ const Index: React.FC = () => {
     endDowntime,
     startOperatorSession,
     endOperatorSession,
-    toggleDemoMode,
-    resetData,
     getActiveDowntime,
     getActiveSession,
   } = useAppState();
 
   // Demo mode auto-production simulation
   useEffect(() => {
-    if (!state.demoMode || state.machine.status !== 'RUNNING') {
+    if (state.machine.status !== 'RUNNING') {
       return;
     }
 
-    const interval = setInterval(() => {
-      const randomCount = Math.floor(Math.random() * 5) + 1; // 1-5 empanadas
-      addProduction(randomCount);
-    }, Math.random() * 5000 + 5000); // Random 5-10 seconds
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-    return () => clearInterval(interval);
+    const scheduleNext = () => {
+      const delay = Math.floor(Math.random() * 2500) + 1500; // 1.5-4 seconds
+      timeoutId = setTimeout(() => {
+        const randomCount = Math.floor(Math.random() * 3) + 1; // 1-3 empanadas
+        addProduction(randomCount);
+        scheduleNext();
+      }, delay);
+    };
+
+    scheduleNext();
+
+    return () => clearTimeout(timeoutId);
   }, [state.demoMode, state.machine.status, addProduction]);
 
   const renderScreen = () => {
@@ -43,8 +49,6 @@ const Index: React.FC = () => {
         return (
           <HomeScreen
             state={state}
-            onToggleDemoMode={toggleDemoMode}
-            onResetData={resetData}
           />
         );
       case 'production':
